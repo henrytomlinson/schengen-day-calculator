@@ -192,6 +192,56 @@ input[type='date']:focus { outline: none; border-color: #2876c9; box-shadow: 0 0
 .empty-result h3 { margin: 0 0 7px; color: #fff; font-size: 1.08rem; }
 .empty-result p { max-width: 260px; margin: 0; font-size: .86rem; line-height: 1.55; }
 
+.outlook-panel { margin-top: 20px; padding: 30px; background: #fff; border: 1px solid rgba(199, 214, 231, .8); }
+.outlook-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+.outlook-header h2 { margin: 0; color: var(--navy); font-size: clamp(1.65rem, 3vw, 2.35rem); letter-spacing: -.04em; }
+.outlook-header p:last-child { max-width: 720px; margin: 9px 0 0; color: var(--muted); line-height: 1.6; }
+.outlook-header > svg { flex: none; color: #0b7c87; }
+.outlook-unavailable { display: flex; gap: 12px; margin-top: 22px; padding: 18px; border-radius: 14px; color: #8f2e2e; background: #fff5f5; border: 1px solid #f0c1c1; }
+.outlook-unavailable svg { flex: none; }
+.outlook-unavailable h3 { margin: 0 0 4px; font-size: .98rem; }
+.outlook-unavailable p { margin: 0; font-size: .86rem; line-height: 1.5; }
+.milestone-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 24px; }
+.milestone-grid article { min-width: 0; padding: 18px; border-radius: 15px; background: #edf5fb; border: 1px solid #d9e6f2; }
+.milestone-grid span { display: block; color: #0b6b78; font-size: .75rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.milestone-grid strong { display: block; margin-top: 8px; color: var(--navy); font-family: 'Manrope', sans-serif; font-size: 1rem; }
+.milestone-grid small { display: block; margin-top: 5px; color: #6a7d93; font-size: .75rem; line-height: 1.4; }
+.outlook-workspace { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(300px, .65fr); gap: 16px; margin-top: 16px; }
+.allowance-chart-card, .date-checker, .monthly-outlook { padding: 22px; border-radius: 17px; background: #f7f9fc; border: 1px solid #e0e8f1; }
+.card-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.card-title-row h3 { margin: 0; color: var(--navy); font-size: 1rem; }
+.card-title-row p { margin: 5px 0 0; color: #6a7c91; font-size: .8rem; line-height: 1.45; }
+.card-title-row > svg { flex: none; color: #0b8790; }
+.allowance-chart { height: 210px; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 8px; margin-top: 22px; }
+.chart-y-axis { display: flex; flex-direction: column; justify-content: space-between; padding-bottom: 1px; color: #7b8b9e; font-size: .7rem; text-align: right; }
+.chart-plot { position: relative; min-width: 0; overflow: hidden; border-bottom: 1px solid #b9c8d8; }
+.chart-grid-line { position: absolute; left: 0; right: 0; height: 1px; background: #dce5ee; }
+.chart-grid-line.top { top: 0; }
+.chart-grid-line.middle { top: 33.333%; }
+.chart-grid-line.lower { top: 66.666%; }
+.daily-bars { position: absolute; inset: 0; display: flex; align-items: flex-end; gap: 1px; }
+.daily-bars span { min-width: 1px; flex: 1 1 0; border-radius: 2px 2px 0 0; background: linear-gradient(180deg, #35cbb0, #0e7184); opacity: .92; }
+.daily-bars span.zero { background: #cbd6e2; opacity: .65; }
+.chart-dates { display: flex; justify-content: space-between; margin: 7px 0 0 38px; color: #75869a; font-size: .7rem; }
+.date-checker label { margin-top: 19px; }
+.checked-allocation { margin-top: 16px; padding: 18px; border-radius: 14px; color: #fff; background: linear-gradient(145deg, #0b3f82, #082b5c); }
+.checked-allocation > span { color: #a9c3dc; font-size: .75rem; }
+.checked-allocation strong { display: block; margin: 4px 0 7px; font-family: 'Manrope', sans-serif; font-size: 1.9rem; }
+.checked-allocation p { margin: 0; color: #c2d3e5; font-size: .8rem; line-height: 1.45; }
+.checker-detail { margin: 14px 0 0; }
+.checker-detail > div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid #dfe7ef; font-size: .78rem; }
+.checker-detail dt { color: #6b7c90; }
+.checker-detail dd { margin: 0; color: var(--navy); font-weight: 800; text-align: right; }
+.rolling-hint { margin: 13px 0 0; color: #6b7c90; font-size: .75rem; line-height: 1.45; }
+.monthly-outlook { margin-top: 16px; }
+.monthly-table-wrap { overflow-x: auto; margin-top: 15px; }
+.monthly-outlook table { width: 100%; min-width: 620px; border-collapse: collapse; font-size: .82rem; }
+.monthly-outlook th, .monthly-outlook td { padding: 12px 14px; border-bottom: 1px solid #dce5ee; text-align: left; }
+.monthly-outlook thead th { color: #75869a; font-size: .72rem; letter-spacing: .07em; text-transform: uppercase; }
+.monthly-outlook tbody th { color: var(--navy); font-weight: 800; }
+.monthly-outlook td { color: #51657d; }
+.monthly-outlook td strong { color: #087268; }
+
 .explanation { margin-top: 80px; }
 .explanation-title h2 { margin: 0; color: var(--navy); font-size: clamp(1.8rem, 3vw, 2.6rem); letter-spacing: -.04em; }
 .rule-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 24px; }
@@ -214,6 +264,8 @@ footer p { margin: 0; }
   .intro-copy { max-width: 650px; }
   .calculator-grid { grid-template-columns: 1fr; }
   .result-panel { position: static; }
+  .milestone-grid { grid-template-columns: repeat(2, 1fr); }
+  .outlook-workspace { grid-template-columns: 1fr; }
   .rule-cards { grid-template-columns: 1fr; }
   .explanation { margin-top: 58px; }
 }
@@ -227,6 +279,12 @@ footer p { margin: 0; }
   .intro-copy { font-size: .96rem; }
   .panel { border-radius: 19px; }
   .input-panel, .result-panel { padding: 21px 17px; }
+  .outlook-panel { padding: 23px 17px; }
+  .outlook-header > svg { display: none; }
+  .milestone-grid { grid-template-columns: 1fr 1fr; }
+  .milestone-grid article { padding: 14px; }
+  .allowance-chart-card, .date-checker, .monthly-outlook { padding: 17px; }
+  .allowance-chart { height: 170px; }
   .date-grid { grid-template-columns: 1fr; }
   .history-heading { align-items: flex-start; }
   .field-help { margin-left: 0; }
