@@ -20,6 +20,13 @@ export interface Assessment {
   earliestFullTripEntry: number | null
 }
 
+export interface OutlookDay {
+  day: number
+  entryBalance: number
+  maxContinuousDays: number
+  latestDeparture: number | null
+}
+
 /** Converts YYYY-MM-DD into an integer UTC day, avoiding local timezone/DST errors. */
 export function parseDate(value: string): number | null {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
@@ -115,12 +122,41 @@ export function isPlannedStayCompliant(
 }
 
 export function maxContinuousStay(history: Stay[], entry: number): number {
-  let allowed = 0
+  // Each previous proposed day has already been checked, so only the new final
+  // day needs evaluating. This keeps a full-year outlook quick in the browser.
   for (let length = 1; length <= MAX_STAY_DAYS; length += 1) {
-    if (!isPlannedStayCompliant(history, entry, entry + length - 1).compliant) break
-    allowed = length
+    const day = entry + length - 1
+    if (usedOnDay([...history, { entry, exit: day }], day) > MAX_STAY_DAYS) {
+      return length - 1
+    }
   }
-  return allowed
+  return MAX_STAY_DAYS
+}
+
+export function entryBalance(history: Stay[], entry: number): number {
+  const used = countDaysInWindow(
+    history,
+    entry - (WINDOW_DAYS - 1),
+    entry - 1,
+  )
+  return Math.max(0, MAX_STAY_DAYS - used)
+}
+
+export function buildOutlook(history: Stay[], start: number, numberOfDays = 366): OutlookDay[] {
+  return Array.from({ length: numberOfDays }, (_, index) => {
+    const day = start + index
+    const maxDays = maxContinuousStay(history, day)
+    return {
+      day,
+      entryBalance: entryBalance(history, day),
+      maxContinuousDays: maxDays,
+      latestDeparture: maxDays > 0 ? day + maxDays - 1 : null,
+    }
+  })
+}
+
+export function findAllowanceDate(outlook: OutlookDay[], minimumDays: number): number | null {
+  return outlook.find((item) => item.maxContinuousDays >= minimumDays)?.day ?? null
 }
 
 export function findEarliestEntry(
