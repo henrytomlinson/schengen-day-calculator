@@ -1,21 +1,27 @@
 import { useMemo, useState } from 'react'
 import {
+  BarChart3,
   CalendarDays,
   Check,
   CircleAlert,
   Clock3,
   ExternalLink,
+  Gauge,
   Info,
   Plus,
   RotateCcw,
+  Route,
   ShieldCheck,
   Trash2,
 } from 'lucide-react'
 import {
   assessTrip,
+  buildOutlook,
+  findAllowanceDate,
   formatDay,
   inclusiveDays,
   parseDate,
+  type OutlookDay,
   type Stay,
   toInputDate,
   todayUtcDay,
@@ -37,10 +43,37 @@ function getInitialPlan() {
   }
 }
 
+function formatMonth(day: number): string {
+  return new Intl.DateTimeFormat('en-GB', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(day * 86_400_000))
+}
+
+function groupOutlookByMonth(days: OutlookDay[]) {
+  const groups = new Map<string, OutlookDay[]>()
+  days.forEach((item) => {
+    const key = toInputDate(item.day).slice(0, 7)
+    groups.set(key, [...(groups.get(key) ?? []), item])
+  })
+
+  return Array.from(groups.values()).map((items) => ({
+    label: formatMonth(items[0].day),
+    startDay: items[0].day,
+    startAllocation: items[0].maxContinuousDays,
+    bestAllocation: Math.max(...items.map((item) => item.maxContinuousDays)),
+  }))
+}
+
 function App() {
   const initialPlan = useMemo(getInitialPlan, [])
   const [plannedEntry, setPlannedEntry] = useState(initialPlan.entry)
   const [plannedExit, setPlannedExit] = useState(initialPlan.exit)
+  const [outlookCheckDate, setOutlookCheckDate] = useState(() => {
+    const initialExit = parseDate(initialPlan.exit)!
+    return toInputDate(initialExit + 1)
+  })
   const [stays, setStays] = useState<StayInput[]>([{ id: newId(), entry: '', exit: '' }])
 
   const calculation = useMemo(() => {
@@ -74,10 +107,10 @@ function App() {
     })
 
     if (errors.length > 0 || entry === null || exit === null || exit < entry) {
-      return { errors, assessment: null, entry, exit }
+      return { errors, assessment: null, entry, exit, history }
     }
 
-    return { errors, assessment: assessTrip(history, entry, exit), entry, exit }
+    return { errors, assessment: assessTrip(history, entry, exit), entry, exit, history }
   }, [plannedEntry, plannedExit, stays])
 
   const updateStay = (id: string, field: 'entry' | 'exit', value: string) => {
@@ -97,12 +130,47 @@ function App() {
     const plan = getInitialPlan()
     setPlannedEntry(plan.entry)
     setPlannedExit(plan.exit)
+    setOutlookCheckDate(toInputDate(parseDate(plan.exit)! + 1))
     setStays([{ id: newId(), entry: '', exit: '' }])
   }
 
   const assessment = calculation.assessment
   const statusClass = assessment?.isCompliant ? 'success' : 'danger'
   const usedPercent = assessment ? Math.min(100, (assessment.usedBeforeEntry / 90) * 100) : 0
+  const outlook = useMemo(() => {
+    if (
+      !assessment?.isCompliant ||
+      calculation.entry === null ||
+      calculation.exit === null
+    ) {
+      return null
+    }
+
+    const committedStays = [
+      ...calculation.history,
+      { entry: calculation.entry, exit: calculation.exit },
+    ]
+    const start = calculation.exit + 1
+    const days = buildOutlook(committedStays, start, 366)
+    const end = days.at(-1)!.day
+    const requestedCheckDay = parseDate(outlookCheckDate)
+    const checkDay = requestedCheckDay !== null && requestedCheckDay >= start && requestedCheckDay <= end
+      ? requestedCheckDay
+      : start
+    const checked = days[checkDay - start]
+
+    return {
+      start,
+      end,
+      days,
+      checked,
+      months: groupOutlookByMonth(days),
+      milestones: [1, 30, 60, 90].map((minimumDays) => ({
+        minimumDays,
+        day: findAllowanceDate(days, minimumDays),
+      })),
+    }
+  }, [assessment, calculation.entry, calculation.exit, calculation.history, outlookCheckDate])
 
   return (
     <div className="app-shell">
@@ -152,7 +220,12 @@ function App() {
                   type="date"
                   value={plannedExit}
                   min={plannedEntry || undefined}
-                  onChange={(event) => setPlannedExit(event.target.value)}
+                  onChange={(event) => {
+                    const value = event.target.value
+                    setPlannedExit(value)
+                    const exitDay = parseDate(value)
+                    if (exitDay !== null) setOutlookCheckDate(toInputDate(exitDay + 1))
+                  }}
                 />
               </label>
             </div>
@@ -293,6 +366,141 @@ function App() {
             )}
           </aside>
         </div>
+
+        <section className="panel outlook-panel" aria-labelledby="outlook-title">
+          <div className="outlook-header">
+            <div>
+              <p className="eyebrow">Your forward plan</p>
+              <h2 id="outlook-title">12-month rolling allowance</h2>
+              <p>
+                This projection includes your previous stays and the planned trip above, then looks forward from the day after you leave.
+              </p>
+            </div>
+            <BarChart3 size={28} aria-hidden="true" />
+          </div>
+
+          {!outlook ? (
+            <div className="outlook-unavailable">
+              <CircleAlert size={20} />
+              <div>
+                <h3>Make the planned trip compliant first</h3>
+                <p>The forward allowance will appear once the trip above has valid dates and stays within the 90/180-day rule.</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="milestone-grid">
+                {outlook.milestones.map((milestone) => (
+                  <article key={milestone.minimumDays}>
+                    <span>{milestone.minimumDays === 1 ? 'Re-enter' : `${milestone.minimumDays} days`}</span>
+                    <strong>{milestone.day === null ? 'Beyond this year' : formatDay(milestone.day)}</strong>
+                    <small>
+                      {milestone.minimumDays === 1
+                        ? 'Earliest date with at least one day available'
+                        : `Earliest arrival for a continuous ${milestone.minimumDays}-day stay`}
+                    </small>
+                  </article>
+                ))}
+              </div>
+
+              <div className="outlook-workspace">
+                <article className="allowance-chart-card">
+                  <div className="card-title-row">
+                    <div>
+                      <h3>Continuous stay available by arrival date</h3>
+                      <p>Each bar is one day. Higher bars mean a longer uninterrupted stay is possible.</p>
+                    </div>
+                    <Gauge size={21} aria-hidden="true" />
+                  </div>
+                  <div className="allowance-chart">
+                    <div className="chart-y-axis" aria-hidden="true">
+                      <span>90</span><span>60</span><span>30</span><span>0</span>
+                    </div>
+                    <div className="chart-plot" aria-hidden="true">
+                      <div className="chart-grid-line top" />
+                      <div className="chart-grid-line middle" />
+                      <div className="chart-grid-line lower" />
+                      <div className="daily-bars">
+                        {outlook.days.map((item) => (
+                          <span
+                            key={item.day}
+                            className={item.maxContinuousDays === 0 ? 'zero' : ''}
+                            style={{ height: `${Math.max(2, (item.maxContinuousDays / 90) * 100)}%` }}
+                            title={`${formatDay(item.day)}: ${item.maxContinuousDays} days`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="chart-dates">
+                    <span>{formatDay(outlook.start)}</span>
+                    <span>{formatDay(outlook.end)}</span>
+                  </div>
+                </article>
+
+                <article className="date-checker">
+                  <div className="card-title-row">
+                    <div>
+                      <h3>Check an exact future date</h3>
+                      <p>Choose any arrival in the next year.</p>
+                    </div>
+                    <Route size={21} aria-hidden="true" />
+                  </div>
+                  <label>
+                    <span>Future arrival</span>
+                    <input
+                      type="date"
+                      min={toInputDate(outlook.start)}
+                      max={toInputDate(outlook.end)}
+                      value={toInputDate(outlook.checked.day)}
+                      onChange={(event) => setOutlookCheckDate(event.target.value)}
+                    />
+                  </label>
+                  <div className="checked-allocation">
+                    <span>Maximum continuous stay</span>
+                    <strong>{outlook.checked.maxContinuousDays} days</strong>
+                    <p>
+                      {outlook.checked.latestDeparture
+                        ? `If you arrive on ${formatDay(outlook.checked.day)}, stay through ${formatDay(outlook.checked.latestDeparture)} at the latest.`
+                        : `No Schengen day is available on ${formatDay(outlook.checked.day)}.`}
+                    </p>
+                  </div>
+                  <dl className="checker-detail">
+                    <div><dt>Entry-day balance</dt><dd>{outlook.checked.entryBalance} days</dd></div>
+                    <div><dt>Projection includes</dt><dd>History + planned trip</dd></div>
+                  </dl>
+                  <p className="rolling-hint">
+                    Your maximum stay can be higher than the entry-day balance because older travel days may expire while you are there.
+                  </p>
+                </article>
+              </div>
+
+              <div className="monthly-outlook">
+                <div className="card-title-row">
+                  <div>
+                    <h3>Month-by-month guide</h3>
+                    <p>Start shows the allowance on the first visible day of each month; best is the highest allowance reached that month.</p>
+                  </div>
+                </div>
+                <div className="monthly-table-wrap">
+                  <table>
+                    <thead><tr><th>Month</th><th>From</th><th>Start</th><th>Best</th></tr></thead>
+                    <tbody>
+                      {outlook.months.map((month) => (
+                        <tr key={month.label}>
+                          <th scope="row">{month.label}</th>
+                          <td>{formatDay(month.startDay)}</td>
+                          <td>{month.startAllocation} days</td>
+                          <td><strong>{month.bestAllocation} days</strong></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
+        </section>
 
         <section className="explanation" aria-labelledby="how-title">
           <div className="explanation-title">
