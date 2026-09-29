@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
   assessTrip,
+  buildOutlook,
   countDaysInWindow,
+  entryBalance,
+  findAllowanceDate,
   findEarliestEntry,
   inclusiveDays,
   isPlannedStayCompliant,
@@ -60,5 +63,19 @@ describe('Schengen rolling-window calculations', () => {
     expect(result.plannedDays).toBe(14)
     expect(result.usedOnDeparture).toBe(44)
     expect(result.isCompliant).toBe(true)
+  })
+
+  it('projects the entry balance after a committed 14-day trip', () => {
+    const committed = [{ entry: day('2026-09-29'), exit: day('2026-10-12') }]
+    expect(entryBalance(committed, day('2026-10-13'))).toBe(76)
+    expect(buildOutlook(committed, day('2026-10-13'), 1)[0].maxContinuousDays).toBe(76)
+  })
+
+  it('finds future allowance milestones across a full-year outlook', () => {
+    const committed = [{ entry: day('2026-01-01'), exit: day('2026-03-31') }]
+    const outlook = buildOutlook(committed, day('2026-04-01'), 366)
+    expect(outlook).toHaveLength(366)
+    expect(toInputDate(findAllowanceDate(outlook, 1)!)).toBe('2026-06-30')
+    expect(toInputDate(findAllowanceDate(outlook, 90)!)).toBe('2026-06-30')
   })
 })
