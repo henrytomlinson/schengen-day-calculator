@@ -1,5 +1,7 @@
 # Schengen 90/180 Day Calculator
 
+**Live app:** https://schengen-day-calculator.vercel.app
+
 A privacy-friendly, mobile-responsive calculator for planning visa-free short stays in the Schengen Area. Enter previous visits and a planned trip to see:
 
 - days used before the planned arrival;
