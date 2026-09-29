@@ -10,6 +10,13 @@ A privacy-friendly, mobile-responsive calculator for planning visa-free short st
 - the maximum continuous stay from the selected arrival; and
 - the earliest eligible entry date for one day or for the full planned trip.
 
+The 12-month forward planner also projects:
+
+- the earliest dates when 1, 30, 60 and 90 continuous days become available;
+- a daily allowance chart for the following year;
+- an exact future-date checker with the latest permitted departure; and
+- a month-by-month allowance summary.
+
 All calculations run in the browser. Dates are not uploaded or stored.
 
 ## How the calculation works
